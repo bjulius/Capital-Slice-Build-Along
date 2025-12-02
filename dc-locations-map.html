@@ -1,0 +1,992 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Capital Slice - DC Location Intelligence Map</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Orbitron:wght@500;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0a0a1a;
+            color: #ffffff;
+            min-height: 100vh;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #0d1025 0%, #1a1a2e 100%);
+            border-bottom: 1px solid rgba(0, 200, 255, 0.2);
+            padding: 20px 40px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #00c8ff, #ff6b6b, transparent);
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo-icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #ff6b6b, #ff8e53);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            box-shadow: 0 4px 20px rgba(255, 107, 107, 0.4);
+        }
+
+        .logo-text h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 24px;
+            font-weight: 700;
+            background: linear-gradient(90deg, #ffffff, #00c8ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .logo-text span {
+            font-size: 12px;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .header-stats {
+            display: flex;
+            gap: 30px;
+        }
+
+        .stat-box {
+            text-align: center;
+            padding: 10px 20px;
+            background: rgba(0, 200, 255, 0.05);
+            border: 1px solid rgba(0, 200, 255, 0.2);
+            border-radius: 8px;
+        }
+
+        .stat-box .number {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 24px;
+            font-weight: 700;
+            color: #00c8ff;
+        }
+
+        .stat-box .label {
+            font-size: 11px;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Main Container */
+        .main-container {
+            display: flex;
+            height: calc(100vh - 100px);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 380px;
+            background: linear-gradient(180deg, #0d1025 0%, #1a1a2e 100%);
+            border-right: 1px solid rgba(0, 200, 255, 0.15);
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .sidebar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .sidebar::-webkit-scrollbar-track {
+            background: #0a0a1a;
+        }
+
+        .sidebar::-webkit-scrollbar-thumb {
+            background: #00c8ff;
+            border-radius: 3px;
+        }
+
+        .section-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 14px;
+            color: #00c8ff;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-title::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(90deg, rgba(0, 200, 255, 0.5), transparent);
+        }
+
+        /* Location Cards */
+        .location-card {
+            background: rgba(26, 26, 46, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .location-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--category-color, #00c8ff);
+        }
+
+        .location-card:hover {
+            border-color: var(--category-color, #00c8ff);
+            transform: translateX(5px);
+            box-shadow: 0 4px 20px rgba(0, 200, 255, 0.2);
+        }
+
+        .location-card.active {
+            border-color: var(--category-color, #00c8ff);
+            background: rgba(0, 200, 255, 0.1);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+
+        .location-number {
+            width: 28px;
+            height: 28px;
+            background: var(--category-color, #00c8ff);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 12px;
+            font-weight: 700;
+            color: #0a0a1a;
+        }
+
+        .location-name {
+            font-size: 16px;
+            font-weight: 600;
+            color: #ffffff;
+            flex: 1;
+            margin-left: 12px;
+        }
+
+        .category-badge {
+            font-size: 10px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--category-color, #00c8ff);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .location-address {
+            font-size: 12px;
+            color: #6b7280;
+            margin-bottom: 8px;
+            padding-left: 40px;
+        }
+
+        .landmarks {
+            padding-left: 40px;
+        }
+
+        .landmarks-label {
+            font-size: 10px;
+            color: #00c8ff;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 4px;
+        }
+
+        .landmark-item {
+            font-size: 11px;
+            color: #9ca3af;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 2px;
+        }
+
+        .landmark-item::before {
+            content: '◆';
+            font-size: 6px;
+            color: var(--category-color, #00c8ff);
+        }
+
+        .time-profile {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+            padding-left: 40px;
+        }
+
+        .time-badge {
+            font-size: 10px;
+            padding: 3px 8px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .time-badge.morning {
+            background: rgba(255, 183, 77, 0.2);
+            color: #ffb74d;
+        }
+
+        .time-badge.afternoon {
+            background: rgba(100, 181, 246, 0.2);
+            color: #64b5f6;
+        }
+
+        .time-badge.evening {
+            background: rgba(186, 104, 200, 0.2);
+            color: #ba68c8;
+        }
+
+        /* Map Container */
+        .map-container {
+            flex: 1;
+            position: relative;
+        }
+
+        #map {
+            height: 100%;
+            width: 100%;
+            background: #0a0a1a;
+        }
+
+        /* Custom Map Styles */
+        .leaflet-container {
+            background: #0a0a1a;
+        }
+
+        /* Layer control styling */
+        .leaflet-control-layers {
+            background: rgba(13, 16, 37, 0.95);
+            border: 1px solid rgba(0, 200, 255, 0.3);
+            border-radius: 8px;
+            color: #ffffff;
+        }
+
+        .leaflet-control-layers-expanded {
+            padding: 10px 14px;
+        }
+
+        .leaflet-control-layers-base label,
+        .leaflet-control-layers-overlays label {
+            color: #ffffff;
+            font-size: 12px;
+        }
+
+        .leaflet-control-layers-separator {
+            border-top-color: rgba(0, 200, 255, 0.2);
+        }
+
+        /* Re-center button */
+        .recenter-control .recenter-button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 34px;
+            height: 34px;
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+            background: #fff;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+        .recenter-control .recenter-button:hover {
+            background: #00c8ff;
+            color: #fff;
+        }
+
+        /* Custom Markers */
+        .custom-marker {
+            position: relative;
+        }
+
+        .marker-pin {
+            width: 36px;
+            height: 36px;
+            border-radius: 50% 50% 50% 0;
+            transform: rotate(-45deg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5), 0 0 0 3px rgba(255, 255, 255, 0.9);
+            border: 2px solid rgba(0, 0, 0, 0.3);
+        }
+
+        .marker-pin span {
+            transform: rotate(45deg);
+            font-family: 'Orbitron', sans-serif;
+            font-size: 12px;
+            font-weight: 700;
+            color: #0a0a1a;
+        }
+
+        .marker-pulse {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            top: -7px;
+            left: -7px;
+            animation: pulse 2s ease-out infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(0.5);
+                opacity: 0.8;
+            }
+            100% {
+                transform: scale(1.5);
+                opacity: 0;
+            }
+        }
+
+        /* Popup Styles */
+        .leaflet-popup-content-wrapper {
+            background: linear-gradient(135deg, #1a1a2e 0%, #0d1025 100%);
+            border: 1px solid rgba(0, 200, 255, 0.3);
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        .leaflet-popup-content {
+            margin: 0;
+            min-width: 280px;
+        }
+
+        .leaflet-popup-tip {
+            background: #1a1a2e;
+            border: 1px solid rgba(0, 200, 255, 0.3);
+        }
+
+        .popup-content {
+            padding: 15px;
+            color: #ffffff;
+        }
+
+        .popup-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .popup-number {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            font-size: 14px;
+            color: #0a0a1a;
+        }
+
+        .popup-title {
+            flex: 1;
+        }
+
+        .popup-title h3 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+
+        .popup-title .category {
+            font-size: 11px;
+            color: #00c8ff;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .popup-section {
+            margin-bottom: 12px;
+        }
+
+        .popup-section-title {
+            font-size: 10px;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 6px;
+        }
+
+        .popup-landmarks {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .popup-landmark {
+            font-size: 11px;
+            padding: 4px 10px;
+            background: rgba(0, 200, 255, 0.1);
+            border: 1px solid rgba(0, 200, 255, 0.2);
+            border-radius: 4px;
+            color: #ffffff;
+        }
+
+        .popup-characteristic {
+            font-size: 12px;
+            color: #9ca3af;
+            line-height: 1.5;
+        }
+
+        .popup-time-profile {
+            display: flex;
+            gap: 15px;
+        }
+
+        .popup-time-item {
+            text-align: center;
+        }
+
+        .popup-time-item .period {
+            font-size: 10px;
+            color: #6b7280;
+            text-transform: uppercase;
+        }
+
+        .popup-time-item .rating {
+            font-size: 14px;
+            margin-top: 2px;
+        }
+
+        /* Legend */
+        .legend {
+            position: absolute;
+            bottom: 30px;
+            right: 20px;
+            background: rgba(13, 16, 37, 0.95);
+            border: 1px solid rgba(0, 200, 255, 0.2);
+            border-radius: 12px;
+            padding: 15px;
+            z-index: 1000;
+            min-width: 200px;
+        }
+
+        .legend-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 11px;
+            color: #00c8ff;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 12px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+            font-size: 12px;
+            color: #9ca3af;
+        }
+
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 4px;
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .main-container {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                height: 300px;
+                order: 2;
+            }
+
+            .map-container {
+                height: 50vh;
+                order: 1;
+            }
+
+            .header-stats {
+                display: none;
+            }
+
+            .legend {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <div class="logo-section">
+                <div class="logo-icon">🍕</div>
+                <div class="logo-text">
+                    <h1>CAPITAL SLICE</h1>
+                    <span>Location Intelligence System</span>
+                </div>
+            </div>
+            <div class="header-stats">
+                <div class="stat-box">
+                    <div class="number">10</div>
+                    <div class="label">Permitted Sites</div>
+                </div>
+                <div class="stat-box">
+                    <div class="number">2</div>
+                    <div class="label">Food Trucks</div>
+                </div>
+                <div class="stat-box">
+                    <div class="number">6</div>
+                    <div class="label">Categories</div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <aside class="sidebar">
+            <div class="section-title">Permitted Locations</div>
+            <div id="location-list"></div>
+        </aside>
+
+        <div class="map-container">
+            <div id="map"></div>
+
+
+            <div class="legend">
+                <div class="legend-title">Location Categories</div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #ff6b6b;"></div>
+                    Market District
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #00c8ff;"></div>
+                    Metro/Urban Hub
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #ffd93d;"></div>
+                    Tourist/Monument
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #6bcb77;"></div>
+                    Waterfront/Upscale
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #ba68c8;"></div>
+                    Arts/Entertainment
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #ff8e53;"></div>
+                    Sports/Events
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // Location data with landmarks for orientation
+        const locations = [
+            {
+                id: 1,
+                name: "Eastern Market",
+                address: "7th St & C St SE",
+                coords: [38.8863, -76.9958],
+                category: "Market District",
+                categoryColor: "#ff6b6b",
+                landmarks: ["Capitol Hill", "Library of Congress (0.4 mi)", "U.S. Capitol (0.6 mi)"],
+                characteristic: "Weekend flea market draws 5,000+ visitors. Strong morning traffic with established breakfast culture.",
+                timeProfile: { morning: 5, afternoon: 2 },
+                optimal: "Fair-weather Saturdays, 7 AM - 1 PM"
+            },
+            {
+                id: 2,
+                name: "Dupont Circle",
+                address: "Dupont Circle NW",
+                coords: [38.9096, -77.0434],
+                category: "Metro/Urban Hub",
+                categoryColor: "#00c8ff",
+                landmarks: ["Embassy Row", "Phillips Collection (0.2 mi)", "White House (0.8 mi south)"],
+                characteristic: "Sunday farmers market overlap. Constant metro foot traffic in affluent neighborhood.",
+                timeProfile: { morning: 4, afternoon: 3 },
+                optimal: "Morning through early afternoon, market days"
+            },
+            {
+                id: 3,
+                name: "National Mall",
+                address: "14th St & Constitution Ave NW",
+                coords: [38.8893, -77.0328],
+                category: "Tourist/Monument",
+                categoryColor: "#ffd93d",
+                landmarks: ["Washington Monument (0.2 mi)", "Smithsonian Museums", "White House (0.5 mi north)"],
+                characteristic: "Highest foot traffic in DC. Tourist demographic with all-day viability.",
+                timeProfile: { morning: 3, afternoon: 4 },
+                optimal: "Perfect weather days, peak tourist season"
+            },
+            {
+                id: 4,
+                name: "Georgetown Waterfront",
+                address: "K St & 31st St NW",
+                coords: [38.9019, -77.0637],
+                category: "Waterfront/Upscale",
+                categoryColor: "#6bcb77",
+                landmarks: ["Georgetown University (0.5 mi)", "C&O Canal", "Key Bridge to Virginia"],
+                characteristic: "Scenic destination with weekend recreational crowds and upscale shopping spillover.",
+                timeProfile: { morning: 3, afternoon: 4 },
+                optimal: "Clear, warm Saturdays, 11 AM - 7 PM"
+            },
+            {
+                id: 5,
+                name: "U Street Corridor",
+                address: "U St & 14th St NW",
+                coords: [38.9169, -77.0319],
+                category: "Arts/Entertainment",
+                categoryColor: "#ba68c8",
+                landmarks: ["9:30 Club (0.3 mi)", "Lincoln Theatre", "African American Civil War Memorial"],
+                characteristic: "Vibrant nightlife district with diverse, food-adventurous demographic.",
+                timeProfile: { morning: 2, afternoon: 4 },
+                optimal: "Afternoon through evening, concert nights"
+            },
+            {
+                id: 6,
+                name: "Convention Center",
+                address: "9th St & Mt Vernon Pl NW",
+                coords: [38.9048, -77.0229],
+                category: "Sports/Events",
+                categoryColor: "#ff8e53",
+                landmarks: ["Walter E. Washington Convention Center", "Chinatown (0.3 mi)", "Carnegie Library"],
+                characteristic: "Major conventions bring 5,000-15,000 captive attendees. Weather-independent.",
+                timeProfile: { morning: 1, afternoon: 5 },
+                optimal: "Exclusively on major convention days"
+            },
+            {
+                id: 7,
+                name: "Capital One Arena",
+                address: "7th St & F St NW",
+                coords: [38.8981, -77.0209],
+                category: "Sports/Events",
+                categoryColor: "#ff8e53",
+                landmarks: ["Chinatown", "National Portrait Gallery (0.2 mi)", "Ford's Theatre (0.3 mi)"],
+                characteristic: "Wizards, Capitals, Mystics games. 18,000 capacity. Bad weather INCREASES value.",
+                timeProfile: { morning: 1, afternoon: 5 },
+                optimal: "Game days, especially afternoon starts"
+            },
+            {
+                id: 8,
+                name: "Columbia Heights",
+                address: "14th St & Irving St NW",
+                coords: [38.9283, -77.0326],
+                category: "Metro/Urban Hub",
+                categoryColor: "#00c8ff",
+                landmarks: ["Columbia Heights Metro", "Target/Best Buy retail hub", "Meridian Hill Park (0.5 mi)"],
+                characteristic: "Residential neighborhood with metro plaza. Lower competition, good for testing.",
+                timeProfile: { morning: 3, afternoon: 3 },
+                optimal: "Backup when primary locations compromised"
+            },
+            {
+                id: 9,
+                name: "H Street Corridor",
+                address: "H St & 12th St NE",
+                coords: [38.9001, -76.9931],
+                category: "Arts/Entertainment",
+                categoryColor: "#ba68c8",
+                landmarks: ["Atlas Performing Arts Center", "DC Streetcar line", "Union Station (0.8 mi west)"],
+                characteristic: "Major street festivals draw 4,000+. Growing food and arts destination.",
+                timeProfile: { morning: 2, afternoon: 4 },
+                optimal: "H Street Festival days, evening positioning"
+            },
+            {
+                id: 10,
+                name: "Navy Yard / The Wharf",
+                address: "Half St SE / Maine Ave SW",
+                coords: [38.8769, -77.0074],
+                category: "Waterfront/Upscale",
+                categoryColor: "#6bcb77",
+                landmarks: ["Nationals Park (41,000 capacity)", "The Wharf development", "Anacostia River"],
+                characteristic: "Nationals games drive massive pre-game crowds. Waterfront dining destination.",
+                timeProfile: { morning: 2, afternoon: 5 },
+                optimal: "Nationals game days, waterfront events"
+            }
+        ];
+
+        // Initialize map centered on DC
+        const map = L.map('map', {
+            center: [38.9000, -77.0200],
+            zoom: 13,
+            zoomControl: true
+        });
+
+        // Base map layers
+        const streetMap = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+            maxZoom: 19
+        });
+
+        const cartoLight = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+            subdomains: 'abcd',
+            maxZoom: 19
+        });
+
+        const cartoDark = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+            subdomains: 'abcd',
+            maxZoom: 19
+        });
+
+        const cartoVoyager = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+            subdomains: 'abcd',
+            maxZoom: 19
+        });
+
+        // Default to Light (clear, readable base map)
+        cartoLight.addTo(map);
+
+        // Layer control
+        const baseMaps = {
+            "Light": cartoLight,
+            "Street Map": cartoVoyager,
+            "Dark": cartoDark,
+            "OpenStreetMap": streetMap
+        };
+
+        L.control.layers(baseMaps, null, { position: 'topright' }).addTo(map);
+
+        // Custom re-center control
+        const RecenterControl = L.Control.extend({
+            options: { position: 'topleft' },
+            onAdd: function(map) {
+                const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control recenter-control');
+                const button = L.DomUtil.create('a', 'recenter-button', container);
+                button.href = '#';
+                button.title = 'Re-center map';
+                button.innerHTML = '⌖';
+                button.setAttribute('role', 'button');
+                button.setAttribute('aria-label', 'Re-center map');
+
+                L.DomEvent.disableClickPropagation(container);
+                L.DomEvent.on(button, 'click', function(e) {
+                    L.DomEvent.preventDefault(e);
+                    map.flyTo([38.9000, -77.0200], 13, { duration: 0.8 });
+                });
+
+                return container;
+            }
+        });
+
+        new RecenterControl().addTo(map);
+
+        // Create custom marker icon
+        function createMarkerIcon(location) {
+            return L.divIcon({
+                className: 'custom-marker',
+                html: `
+                    <div class="marker-pulse" style="background: ${location.categoryColor}30;"></div>
+                    <div class="marker-pin" style="background: ${location.categoryColor};">
+                        <span>${location.id}</span>
+                    </div>
+                `,
+                iconSize: [36, 36],
+                iconAnchor: [18, 36],
+                popupAnchor: [0, -36]
+            });
+        }
+
+        // Create popup content
+        function createPopupContent(location) {
+            const morningStars = '★'.repeat(location.timeProfile.morning) + '☆'.repeat(5 - location.timeProfile.morning);
+            const afternoonStars = '★'.repeat(location.timeProfile.afternoon) + '☆'.repeat(5 - location.timeProfile.afternoon);
+
+            return `
+                <div class="popup-content">
+                    <div class="popup-header">
+                        <div class="popup-number" style="background: ${location.categoryColor};">${location.id}</div>
+                        <div class="popup-title">
+                            <h3>${location.name}</h3>
+                            <div class="category">${location.category}</div>
+                        </div>
+                    </div>
+                    <div class="popup-section">
+                        <div class="popup-section-title">📍 Address</div>
+                        <div class="popup-characteristic">${location.address}</div>
+                    </div>
+                    <div class="popup-section">
+                        <div class="popup-section-title">🏛️ Nearby Landmarks</div>
+                        <div class="popup-landmarks">
+                            ${location.landmarks.map(l => `<span class="popup-landmark">${l}</span>`).join('')}
+                        </div>
+                    </div>
+                    <div class="popup-section">
+                        <div class="popup-section-title">📊 Characteristics</div>
+                        <div class="popup-characteristic">${location.characteristic}</div>
+                    </div>
+                    <div class="popup-section">
+                        <div class="popup-section-title">⏰ Time Profile</div>
+                        <div class="popup-time-profile">
+                            <div class="popup-time-item">
+                                <div class="period">Morning</div>
+                                <div class="rating" style="color: #ffb74d;">${morningStars}</div>
+                            </div>
+                            <div class="popup-time-item">
+                                <div class="period">Afternoon</div>
+                                <div class="rating" style="color: #64b5f6;">${afternoonStars}</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="popup-section">
+                        <div class="popup-section-title">✨ Optimal Conditions</div>
+                        <div class="popup-characteristic">${location.optimal}</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Store markers for interaction
+        const markers = {};
+
+        // Add markers to map
+        locations.forEach(location => {
+            const marker = L.marker(location.coords, {
+                icon: createMarkerIcon(location)
+            }).addTo(map);
+
+            marker.bindPopup(createPopupContent(location), {
+                maxWidth: 320,
+                className: 'custom-popup'
+            });
+
+            markers[location.id] = marker;
+        });
+
+        // Generate sidebar cards
+        const locationList = document.getElementById('location-list');
+
+        locations.forEach(location => {
+            const card = document.createElement('div');
+            card.className = 'location-card';
+            card.style.setProperty('--category-color', location.categoryColor);
+            card.dataset.id = location.id;
+
+            const morningClass = location.timeProfile.morning >= 4 ? 'strong' : location.timeProfile.morning >= 2 ? 'moderate' : 'weak';
+            const afternoonClass = location.timeProfile.afternoon >= 4 ? 'strong' : location.timeProfile.afternoon >= 2 ? 'moderate' : 'weak';
+
+            card.innerHTML = `
+                <div class="card-header">
+                    <div class="location-number" style="background: ${location.categoryColor};">${location.id}</div>
+                    <div class="location-name">${location.name}</div>
+                    <div class="category-badge" style="color: ${location.categoryColor};">${location.category.split('/')[0]}</div>
+                </div>
+                <div class="location-address">${location.address}</div>
+                <div class="landmarks">
+                    <div class="landmarks-label">Nearby Landmarks</div>
+                    ${location.landmarks.slice(0, 2).map(l => `<div class="landmark-item">${l}</div>`).join('')}
+                </div>
+                <div class="time-profile">
+                    <div class="time-badge morning">☀️ Morning: ${'★'.repeat(location.timeProfile.morning)}</div>
+                    <div class="time-badge afternoon">🌤️ PM: ${'★'.repeat(location.timeProfile.afternoon)}</div>
+                </div>
+            `;
+
+            card.addEventListener('click', () => {
+                // Remove active class from all cards
+                document.querySelectorAll('.location-card').forEach(c => c.classList.remove('active'));
+                // Add active class to clicked card
+                card.classList.add('active');
+                // Fly to location and open popup
+                map.flyTo(location.coords, 15, { duration: 0.8 });
+                markers[location.id].openPopup();
+            });
+
+            locationList.appendChild(card);
+        });
+
+        // Add major DC landmarks for orientation (subtle markers)
+        const dcLandmarks = [
+            { name: "U.S. Capitol", coords: [38.8899, -77.0091], icon: "🏛️" },
+            { name: "White House", coords: [38.8977, -77.0365], icon: "🏛️" },
+            { name: "Lincoln Memorial", coords: [38.8893, -77.0502], icon: "🏛️" },
+            { name: "Washington Monument", coords: [38.8895, -77.0353], icon: "🗼" }
+        ];
+
+        dcLandmarks.forEach(landmark => {
+            const landmarkIcon = L.divIcon({
+                className: 'landmark-marker',
+                html: `<div style="font-size: 20px; opacity: 0.6; filter: grayscale(50%);">${landmark.icon}</div>`,
+                iconSize: [24, 24],
+                iconAnchor: [12, 12]
+            });
+
+            L.marker(landmark.coords, { icon: landmarkIcon })
+                .addTo(map)
+                .bindTooltip(landmark.name, {
+                    permanent: false,
+                    direction: 'top',
+                    className: 'landmark-tooltip'
+                });
+        });
+    </script>
+</body>
+</html>
