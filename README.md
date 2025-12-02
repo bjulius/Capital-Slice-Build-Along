@@ -1,4 +1,4 @@
-# Capital Slice: A 4-week end-to-end "build along in public" Claude Skill to perform and automate a complex real-world business challenge
+# Capital Slice: A 4-week end-to-end "build along" project to solve and automate a complex real-world business challenge using Claude Skills
 
 **Author:** Brian Julius
 **Technical Assistance:** Claude Code (Anthropic)
