@@ -88,7 +88,7 @@ This is a 4-week build-along series:
 3. **Week 3:** source control and documenting your Claude's skill 
 4. **Week 4:** distributing and maintaining your Claude skill
 
-Starting today and for the next four weeks. I will post every Monday with analysis of the previous week and instructions for the next.  Use the comment section of my post each week o ask any questions and discuss your build efforts throughout the week, I will follow the comments and try to respond as promptly as possible. So that everyone can benefit from this exercise, please use the comment section rather than messaging me directly.
+Starting today and for the next four weeks. I will post every Monday with analysis of the previous week and instructions for the next.  Use the comment section of my post each week to ask any questions and discuss your build efforts throughout the week, I will follow the comments and try to respond as promptly as possible. So that everyone can benefit from this exercise, please use the comment section rather than messaging me directly.
 
 ## License
 
