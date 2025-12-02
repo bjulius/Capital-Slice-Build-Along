@@ -57,7 +57,7 @@ Brian has prepared three documents to help you gain a handle on specifics of thi
 
 ## Live Map
 
-View the interactive location map: [Capital Slice DC Locations](https://bjulius.github.io/capital-slice/dc-locations-map.html)
+View the interactive location map: [Capital Slice DC Locations](https://bjulius.github.io/Capital-Slice-Build-Along/briefing-docs/dc-locations-map.html)
 
 ## Using Claude Skills for This Project
 
