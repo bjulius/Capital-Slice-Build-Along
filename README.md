@@ -27,7 +27,7 @@ The players are
 
 🔸 You, a data analyst with a track record of analyzing complex service markets, quickly pinpointing market drivers that give your clients an edge, and implementing automated systems that enable them consistently stay a step or two ahead of the competition. 
 
-Brian and Raven have studied the DC food truck market and envision Capital Slice as a strong entrant into the market - few direct competitors, high profit margins, leverages culinary strengths Raven built while working in Naples and Turin, and the trucks obtained in the forfeiture action are well-equipped for pizza making.
+Brian and Raven have studied the DC food truck market and envision Capital Slice as a strong entrant - few direct competitors, high profit margins, leverages culinary strengths Raven built while working in Naples and Turin, and the trucks obtained in the forfeiture action are well-equipped for pizza making.
 
 # YOUR OBJECTIVE
 
